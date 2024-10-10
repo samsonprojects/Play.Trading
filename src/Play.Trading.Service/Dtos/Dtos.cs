@@ -7,10 +7,9 @@ using System.Threading.Tasks;
 namespace Play.Trading.Service.Dtos
 {
     public record SubmitPurchaseDto(
+        [Required] Guid? IdempotencyId,
         [Required] Guid? ItemId,
-        [Range(1, 100)] int Quantity,
-        [Required] Guid IdempotencyId
-
+        [Range(1, 100)] int Quantity
     );
 
     public record PurchaseDto(

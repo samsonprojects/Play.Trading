@@ -31,6 +31,10 @@ namespace Play.Trading.Service.Controllers
         [HttpGet("status/{idempotencyId}")]
         public async Task<ActionResult<PurchaseDto>> GetStatusAsync(Guid idempotencyId)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             var response = await purchaseClient
                 .GetResponse<PurchaseState>(new GetPurchaseState(idempotencyId));
 
@@ -51,21 +55,25 @@ namespace Play.Trading.Service.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> PostAsync(SubmitPurchaseDto purchaseDto)
+        public async Task<IActionResult> PostAsync(SubmitPurchaseDto purchase)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             var userId = User.FindFirstValue("sub");
 
             var message = new PurchaseRequested(
                 Guid.Parse(userId),
-                purchaseDto.ItemId.Value,
-                purchaseDto.Quantity,
-                purchaseDto.IdempotencyId
+                purchase.ItemId.Value,
+                purchase.Quantity,
+                purchase.IdempotencyId.Value
             );
 
             await publishEndpoint.Publish(message);
             return AcceptedAtAction(nameof(GetStatusAsync),
-            new { purchaseDto.IdempotencyId },
-            new { purchaseDto.IdempotencyId });
+                new { purchase.IdempotencyId },
+                new { purchase.IdempotencyId });
         }
     }
 }
